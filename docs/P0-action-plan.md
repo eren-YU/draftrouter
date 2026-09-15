@@ -94,6 +94,7 @@ WP0 环境就绪确认 ──┬── WP1 探针（词表+显存+LoRA） ──
 6. 长度分布：Qwen3 tokenizer 分词，按场景报告分位数；每个场景再切三分位桶，供 C4 长度分层分析；模型侧只在该字段出现的文档子集上统计非空率。
 7. 输出形态控制：同一批 RAG long 样本配两套模板：verbatim（逐字引用）与 non-verbatim（禁止逐字引用，要求同长度改写/理由输出）；中文 JSON vs 自然段落同样配对；样本 ID 与 `output_mode` 落盘。
 - D2 冻结：DuReader 链路不通，或 data-valid 四字段覆盖率不达标，或模型侧逐字约束失败 → 首选 `THUDM/LongBench` 的 `dureader` 子集（中文长文，Apache-2.0），config/split/revision 在链路探测时记录实际值并写入数据清单；若该子集不可达或四字段筛查仍不达标，P0 数据协议失败，停止全量。
+  **【已触发并确认 2026-09-15】** DuReader-robust 四字段覆盖 10.5-24% 不达标；用户确认切换 LongBench dureader（覆盖 75-97.5% 全过）。执行与收尾见 `docs/P0/T2-wp2-data.md`。
 - 产物：`data/*.jsonl`（云端，不入库）+ 构建脚本（入库，确定性可复现）+ 长度分布表（入 docs）。
 
 ### WP3 · bench 脚手架（`scripts/bench/`）

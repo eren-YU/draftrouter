@@ -23,18 +23,28 @@ ALCE tar/LongBench zip/repobench parquet/dureader BOS tar 的加载与四池构�
 - [ ] D2 冻结:实际数据源/config/revision 写入本文件;长度分布表(p10/p50/p90)入 docs;
 - [ ] 构建脚本改动本地 commit。
 
-## D2 决策项(2026-09-15 数据侧筛查完成,待用户确认)
+## D2 冻结记录(2026-09-15,用户已确认)
 
-数据侧筛查结果(data-valid 200,四字段出现率,门槛 60%):
+**决策:中文主源正式切换为 `THUDM/LongBench` 的 `dureader` 子集。**
+
+依据(data-valid 200 四字段数据侧出现率,门槛 60%,action-plan §0 D2/§3 WP2):
 
 | 源 | company | amount | time | product | 结论 |
 | --- | --- | --- | --- | --- | --- |
-| DuReader-robust(主源,dev) | 10.5% | 17% | 24% | 3% | **不达标** |
-| LongBench dureader(fallback) | 97% | 91.5% | 97.5% | 75% | **pass** |
+| DuReader-robust(原主源) | 10.5% | 17% | 24% | 3% | 不达标,排除 |
+| **LongBench dureader(新主源)** | 97% | 91.5% | 97.5% | 75% | **pass** |
 
-按 action-plan D2 预案,建议正式切 LongBench dureader 为中文主源(数据已在云端
-`longbench_data.zip`,筛查 200 篇 0 超长)。**待用户确认后**执行:base_records 主源切换、
-重跑四池与筛查、更新数据清单与 docs 数据源表 → 本文件勾掉剩余验收项。
+数据源冻结口径:
+- 仓库 `THUDM/LongBench`(HF),取整包 `data.zip`(113MB,sha256 见云端
+  `/root/autodl-tmp/data/data_manifest.json` 的 longbench 条目),子集 `dureader.jsonl`,
+  字段 context+input,revision=main(分支无 tag;文件级 sha256 即冻结依据);
+- DuReader-robust BOS tar 保留在下载计划中作对照,不再进入样本构造;
+- 探测产物:`/root/autodl-tmp/data/probe/links.json`。
+
+## T2 剩余执行项(D2 已定,下会话收尾)
+1. `base_records.py` 中文场景主源切到 LongBench dureader(DuReader-robust 降对照);
+2. 云端重跑 `build_all.py`:重建中文样本与四池 → 重跑 length_stats(三场景桶边界重冻结)→ field_screen 复核 ≥60%;
+3. 验收项对照本文件上方清单逐条勾;长度分布表入 docs;commit。
 
 ## 已完成(2026-09-15,子代理云端实测,commit 2a20bf4)
 - repobench-c 改 parquet 分支(`.../parquet/{config}/test/0000.parquet`,列取 prompt);
