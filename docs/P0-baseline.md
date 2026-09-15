@@ -14,7 +14,7 @@
 - 不 fork vLLM 引擎主干（上游月更，fork 会被持续吞掉）。
 - 不重复实现上游已有能力：prompt-lookup(n-gram)、按 batch size 排 K 的投机长度、自适应验证预算、spec-decode 统计。
 - 不做引擎级 Block 分配改造（draft token 的 slot 分配与回滚是上游现有行为）。
-- P0 不测 Qwen3-4B 草稿；4B 在 P3 再评估。
+- P0 不测 Qwen3-4B 草稿;4B 草稿路线已排除(见下条显存核算),P3 显存路线相应只剩 1.7B 基座 + LoRA 与 0.6B+1.7B 常驻。
 
 ## 1. 目标模型与草稿池
 
