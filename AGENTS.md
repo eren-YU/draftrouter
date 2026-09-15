@@ -6,7 +6,7 @@
 
 - **本地(D:\code\draftrouter)**:代码唯一事实源。所有编辑、纯逻辑单测(路由器/配置/调度决策,mock 掉 GPU 依赖)、review、commit 都在这里。
 - **云端(AutoDL,`ssh autodl` 即达)**:只作为算力执行环境。RTX4090 24G,Ubuntu 22.04,项目在 `/root/autodl-tmp/draftrouter`,conda 环境 `draftrouter`,模型缓存 `/root/autodl-tmp/hf-cache`。
-- 同步方式:本地 commit/push → `ssh autodl "cd /root/autodl-tmp/draftrouter && git pull"`。禁止在云端直接改代码(会被下次 pull 覆盖)。
+- 同步方式:本地 commit/push → `ssh autodl "source /etc/network_turbo; cd /root/autodl-tmp/draftrouter && git pull"`。云端访问 GitHub 必须先 `source /etc/network_turbo`(学术加速),否则连接超时;且已配置 git 使用 HTTP/1.1。禁止在云端直接改代码(会被下次 pull 覆盖)。
 
 ## 云端操作规则
 
