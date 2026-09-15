@@ -13,3 +13,6 @@ results/baseline/*
 !results/baseline/summary.json
 *.log
 .DS_Store
+
+# 本地工程约束,不进远程仓库
+AGENTS.md
