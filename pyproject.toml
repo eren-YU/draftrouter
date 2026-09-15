@@ -1,0 +1,19 @@
+[project]
+name = "draftrouter"
+version = "0.1.0"
+description = "DraftRouter: domain-adaptive speculative sampling (draft pool + request-level router + prompt lookup) on vLLM 0.29"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".idea"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# scripts/data_prep 与 scripts/bench 用 sys.path 注入的包内导入,E402 在文件头已有 noqa
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "scripts/bench/tests", "scripts/data_prep/tests"]
