@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """四字段数据侧预筛(G4 数据侧):中文篇章正则筛查 + data-valid 池覆盖率统计。
 
 【云端执行方式】
@@ -20,8 +19,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from base_records import build_base_records, load_pools  # noqa: E402
 from common import data_root, save_json  # noqa: E402
 from core import MAX_INPUT_TOKENS  # noqa: E402
-from field_regex import (FIELD_COVERAGE_THRESHOLD, FIELD_NAMES,  # noqa: E402
-                         detect_fields, field_coverage)
+from field_regex import (  # noqa: E402
+    FIELD_COVERAGE_THRESHOLD,
+    FIELD_NAMES,
+    detect_fields,
+    field_coverage,
+)
 
 
 def screen_records(records: list[dict], tokenize=None) -> dict:

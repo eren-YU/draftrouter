@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """本地单测公共夹具:把 scripts/bench 目录加进 sys.path(本地无 vllm 也能跑)。"""
 
 import os

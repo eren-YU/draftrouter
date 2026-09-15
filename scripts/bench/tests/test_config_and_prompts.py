@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 """配置/模板/spec 枚举单测(全部纯逻辑,不 import vllm)。"""
-
-import pytest
 
 import config
 import prompts
-from configs import enumerate_spec_configs, resolve_spec_config
+import pytest
 
+from configs import enumerate_spec_configs, resolve_spec_config
 
 # ---------------------------------------------------------------- config.py
 
@@ -69,16 +67,20 @@ def test_spec_config_enumeration():
             c = cfgs[f"B_{draft}_K{k}"]
             assert c.kind == "draft"
             patch = c.llm_kwargs_patch()
-            assert patch["speculative_model"].endswith(draft) or draft in patch["speculative_model"]
-            assert patch["num_speculative_tokens"] == k
+            sc = patch["speculative_config"]
+            assert sc["method"] == "draft_model"
+            assert draft in sc["model"]
+            assert sc["num_speculative_tokens"] == k
     # C:K{3,5,7} × lookup_max{3,5} = 6 个
     n_c = sum(1 for cid in cfgs if cid.startswith("C_"))
     assert n_c == 6
     c = cfgs["C_K5_L5"]
     patch = c.llm_kwargs_patch()
-    assert patch["method"] == "ngram"
-    assert patch["num_speculative_tokens"] == 5
-    assert patch["prompt_lookup_max"] == 5
+    sc = patch["speculative_config"]
+    assert sc["method"] == "ngram"
+    assert sc["num_speculative_tokens"] == 5
+    assert sc["prompt_lookup_max"] == 5
+    assert sc["prompt_lookup_min"] == 5
     # 总数 = 1 + 6 + 6
     assert len(cfgs) == 13
 

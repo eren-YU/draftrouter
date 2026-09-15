@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """样本构造(WP2 第 3/7 条):RAG short/long 扩长 + 输出形态配对 → data/samples/*.jsonl。
 
 【云端执行方式】
@@ -16,16 +15,20 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from base_records import (build_base_records, load_pools,  # noqa: E402
-                          qwen_tokenize)
+from base_records import build_base_records, load_pools, qwen_tokenize  # noqa: E402
 from common import data_root, load_json, save_json, write_jsonl  # noqa: E402
-from core import (MAX_INPUT_TOKENS, RAG_LONG_HI, RAG_LONG_LO,  # noqa: E402
-                  assign_bucket, build_long_input, expand_output_modes, make_sample)
+from core import (  # noqa: E402
+    MAX_INPUT_TOKENS,
+    RAG_LONG_LO,
+    assign_bucket,
+    build_long_input,
+    expand_output_modes,
+    make_sample,
+)
 from field_regex import detect_fields  # noqa: F401 —— 中文段落场景指令内嵌四字段协议
 
 

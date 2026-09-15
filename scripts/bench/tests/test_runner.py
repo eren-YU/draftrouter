@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
 """runner 纯逻辑单测:TTFT/TPOT/e2e 计算、汇总、shuffle 确定性、batch 提取兜底。"""
 
 import pytest
-
-from runner import (compute_request_metrics, extract_batch_stats,
-                    extract_num_output_tokens, shuffle_group_order,
-                    summarize_requests)
+from runner import (
+    compute_request_metrics,
+    extract_batch_stats,
+    extract_num_output_tokens,
+    shuffle_group_order,
+    summarize_requests,
+)
 
 
 class FakeMetrics:
@@ -45,9 +47,9 @@ def test_missing_metrics_fields_none():
 def test_extract_num_output_tokens_duck_typing():
     assert extract_num_output_tokens({"x": 1}) is None if False else True
     class Out:  # 新路径:outputs[0].token_ids
-        class O:
+        class Tok:
             token_ids = [1, 2, 3]
-        outputs = [O()]
+        outputs = [Tok()]
         num_output_tokens = None
     assert extract_num_output_tokens(Out) == 3
 

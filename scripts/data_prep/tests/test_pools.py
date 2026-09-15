@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """四池分配:零交集、确定性、分层、规模;与 mock 记录一起测(不触网)。"""
 
 import sys
@@ -6,11 +5,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest  # noqa: E402
-
 from core import POOL_SIZES, assert_disjoint, assign_pools  # noqa: E402
 
 
-def _make_records(n_per_scene=200, scenes=("chinese", "code", "rag")):
+def _make_records(n_per_scene=300, scenes=("chinese", "code", "rag")):
     records = []
     for s in scenes:
         for i in range(n_per_scene):
@@ -47,8 +45,8 @@ def test_pool_assignment_deterministic():
 def test_stratified_by_scene():
     records = _make_records()
     pools = assign_pools(records, seed=0)
-    for pool in ("tuning", "data_valid"):
-        scene_of = {r["sample_id"]: r["scene"] for r in records}
+    scene_of = {r["sample_id"]: r["scene"] for r in records}
+    for pool in ("tuning", "report"):
         counts = {}
         for i in pools[pool]:
             counts[scene_of[i]] = counts.get(scene_of[i], 0) + 1
@@ -56,6 +54,15 @@ def test_stratified_by_scene():
         assert set(counts) == {"chinese", "code", "rag"}
         for n in counts.values():
             assert abs(n - len(pools[pool]) / 3) <= 2
+
+
+def test_data_valid_all_chinese():
+    # G4:data-valid 池专用于四字段数据侧筛查,固定全中文
+    records = _make_records()
+    pools = assign_pools(records, seed=0)
+    scene_of = {r["sample_id"]: r["scene"] for r in records}
+    assert len(pools["data_valid"]) == 200
+    assert all(scene_of[i] == "chinese" for i in pools["data_valid"])
 
 
 def test_overlap_raises():

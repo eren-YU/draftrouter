@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """离线 bench runner(WP3 / C1-C2)。
 
 - LLM.generate 离线 batch,BS∈{1,4,8}(BS = 离线 batch size,非客户端并发)
@@ -193,12 +192,24 @@ def run_one_group(llm: Any, prompts: list[str], sampling_params: Any,
     wall_s = time.perf_counter() - t0
 
     req_metrics = []
+    spec_parts = []
     for out in outputs:
         n = extract_num_output_tokens(out)
         req_metrics.append(compute_request_metrics(getattr(out, "metrics", None),
                                                    n if n is not None else 0))
+        from spec_stats import spec_stats_from_request_output
+        s = spec_stats_from_request_output(out)
+        if s is not None:
+            spec_parts.append(s)
     result = summarize_requests(req_metrics)
     result.update(extract_batch_stats(llm))
+    if spec_parts:
+        from spec_stats import aggregate_spec_stats
+        spec = aggregate_spec_stats(spec_parts)
+    else:
+        from spec_stats import SpecStats
+        spec = SpecStats()  # plain(A)配置:四字段全 null 属预期
+    result["spec_stats"] = spec.to_dict()
     result["bs"] = bs
     result["wall_time_s"] = wall_s
     result["requests"] = req_metrics

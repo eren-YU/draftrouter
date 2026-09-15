@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """长度分布与三分位桶(C4):Qwen3 tokenizer 分词,按场景 p10/p50/p90/p99 + 全局三分位桶。
 
 【云端执行方式】
@@ -18,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from base_records import build_base_records, load_pools, qwen_tokenize  # noqa: E402
-from common import data_root, load_json, save_json  # noqa: E402
+from common import data_root, save_json  # noqa: E402
 from core import freeze_buckets, quantiles  # noqa: E402
 
 

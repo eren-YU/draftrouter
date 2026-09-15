@@ -40,5 +40,6 @@ for m in $MODELS; do
 done
 
 # 5. 自检
+# 注意:vLLM 运行时需 export VLLM_USE_FLASHINFER_SAMPLER=0(宿主 nvcc 11.8,flashinfer JIT 必失败)
 $PY -c "import torch,vllm; assert torch.cuda.is_available(); print('torch',torch.__version__,'| vllm',vllm.__version__,'|',torch.cuda.get_device_name(0))"
 echo "环境就绪。python: $PY"

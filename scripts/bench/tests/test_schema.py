@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """schema 单测:必含键完整性、null 兜底、写盘回读。"""
 
 import json
 
 import pytest
-
-import schema
 from schema import build_result, fill_metrics, validate_result, write_result
 
 

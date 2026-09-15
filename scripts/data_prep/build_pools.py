@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """四池构造(C12):tuning 50 / report 50 / data-valid 200 / router-train 独立池。
 
 【云端执行方式】
@@ -26,7 +25,7 @@ def build_and_write_pools(records: list[dict], root: Path | None = None,
                           seed: int = 0, sizes: dict | None = None) -> dict[str, list[str]]:
     """四池分配 + ID 落盘;返回 {pool: [sample_id]}。"""
     pools = assign_pools(records, seed=seed, sizes=sizes)
-    conflicts = assert_disjoint(pools)  # 双保险:落盘前再断言一次
+    assert_disjoint(pools)  # 双保险:落盘前再断言一次
     root = (root or data_root()) / "pools"
     for pool, ids in pools.items():
         save_json({

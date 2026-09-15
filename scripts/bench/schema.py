@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """结果 JSON schema 与落盘(WP3 / C2、C11)。
 
 要求字段(全量列出;取不到的记 null,不省略、不编造):
@@ -17,8 +16,12 @@ import subprocess
 import sys
 from typing import Any
 
-from config import (ENABLE_PREFIX_CACHING, ENABLE_THINKING,
-                    read_image_digest, read_instance_uptime_seconds)
+from config import (
+    ENABLE_PREFIX_CACHING,
+    ENABLE_THINKING,
+    read_image_digest,
+    read_instance_uptime_seconds,
+)
 
 # 结果 JSON 必含的顶层键(单测校验完整性)
 REQUIRED_KEYS = (

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """RAG 扩长拼接逻辑(fake tokenizer)+ 样本 schema + 输出形态配对(不触网、无重依赖)。"""
 
 import sys
@@ -6,10 +5,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest  # noqa: E402
-
-from core import (RAG_LONG_HI, RAG_LONG_LO, SAMPLE_FIELDS,  # noqa: E402
-                  assign_pools, build_long_input, expand_output_modes,
-                  make_output_mode, make_sample, validate_sample)
+from core import (  # noqa: E402
+    RAG_LONG_HI,
+    RAG_LONG_LO,
+    SAMPLE_FIELDS,
+    assign_pools,
+    build_long_input,
+    expand_output_modes,
+    make_output_mode,
+    make_sample,
+    validate_sample,
+)
 
 
 # fake tokenizer:按字符计数(中文友好、确定性);"1"×n 段落长度可控

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """三分位桶与分位数:全局冻结口径、桶指派、分位数插值(纯逻辑)。"""
 
 import sys
@@ -6,9 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest  # noqa: E402
-
-from core import (assign_bucket, compute_tertile_boundaries,  # noqa: E402
-                  freeze_buckets, quantiles)
+from core import assign_bucket, compute_tertile_boundaries, freeze_buckets, quantiles  # noqa: E402
 
 
 def test_quantiles_known_values():

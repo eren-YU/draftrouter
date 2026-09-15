@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """WP2 核心纯逻辑:RAG 扩长、三分位长度桶、四池分层抽样、输出形态配对、样本 schema。
 
 本模块不含网络/GPU 依赖,tokenizer 以参数注入(duck-typing:有 encode(text)->list 即可),
@@ -8,7 +7,7 @@
 from __future__ import annotations
 
 import random
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 # ---------------------------------------------------------------------------
 # C3 长度档口径:RAG long 主判档 = [7500, 8192](Qwen3 tokenizer)
@@ -40,9 +39,14 @@ def build_long_input(question: str, passages: list[str],
 
     - short 档基准 = 原生样本(不做任何拼接);
     - 不足 lo 时按序追加段落;段落用尽仍不足 → 标记 insufficient=True(调用方记日志);
-    - 超过 hi 时截到最后一个不越界的段落(保持段落完整,不做段内截断)。
-    返回 {passages_used, token_len, insufficient, input_text}。
+    - 超过 hi 时截到最后一个不越界的段落(保持段落完整,不做段内截断);
+    - 分段累计计长与整文计长存在分词合并漂移,故拼接完成后对整文复测:
+      仍超 hi 则回退段落重测,直到 <= hi(保证 C5 上限硬约束)。
+    返回 {passages_used, token_len, insufficient, input_text},token_len 为整文实测值。
     """
+    def _join(used: list[str]) -> str:
+        return question + "\n" + "\n".join(used)
+
     used: list[str] = []
     n_tokens = token_len(question, tokenize)
     for p in passages:
@@ -53,9 +57,15 @@ def build_long_input(question: str, passages: list[str],
         n_tokens = cand
         if n_tokens >= lo:
             break
-    insufficient = n_tokens < lo
-    input_text = question + "\n" + "\n".join(used)
-    return {"passages_used": len(used), "token_len": n_tokens,
+
+    input_text = _join(used)
+    n_full = token_len(input_text, tokenize)  # 整文复测(消除合并漂移)
+    while used and n_full > hi:               # 漂移导致超上限 → 回退段落
+        used.pop()
+        input_text = _join(used)
+        n_full = token_len(input_text, tokenize)
+    insufficient = n_full < lo
+    return {"passages_used": len(used), "token_len": n_full,
             "insufficient": insufficient, "input_text": input_text}
 
 
@@ -110,7 +120,12 @@ def freeze_buckets(lengths_by_scene: dict[str, list[float]]) -> dict:
 
 POOL_SIZES = {"tuning": 50, "report": 50, "data_valid": 200, "router_train": 200}
 
-# 分层配额按场景占比:中文/代码/RAG 各池同比例(实现按各场景可用量比例分配,余数给排在前面的场景)
+# 池的场景策略:tuning/report 按各场景可用量比例分层;
+# data-valid 专用于四字段数据侧筛查(G4 要求 200 条中文篇章),固定全中文;
+# router-train 从剩余样本补足(任意场景)。
+POOL_SCENE_POLICY = {"data_valid": ("chinese",)}
+
+# 分层配额按场景占比(实现按各场景可用量比例分配,余数给排在前面的场景)
 _SCENE_ORDER = ("chinese", "code", "rag")
 
 
@@ -162,9 +177,13 @@ def assign_pools(records: list[dict], seed: int = 0,
     # 前三池依次抽取;router-train 从剩余中补足
     for pool in ("tuning", "report", "data_valid"):
         rng = random.Random(seed)
-        quota = _quota(sizes[pool], {s: len(v) for s, v in remaining.items()})
+        allowed = POOL_SCENE_POLICY.get(pool, _SCENE_ORDER)
+        quota = _quota(sizes[pool], {s: len(v) for s, v in remaining.items()
+                                     if s in allowed})
         picked: list[str] = []
         for s in _SCENE_ORDER:
+            if s not in allowed:
+                continue
             take = min(quota[s], len(remaining[s]))
             for _ in range(take):
                 # 逐个 pop(采样前先洗牌,洗牌序列由 seed 决定,确定性)

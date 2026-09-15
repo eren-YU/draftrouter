@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """链路探测:只输出 URL 与可达性 JSON,不下载大文件。
 
 【云端执行方式】
@@ -29,15 +28,16 @@ HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://hf-mirror.com")
 
 # 已知候选(与 HF resolve 布局一致);探测时逐个验证
 CANDIDATES = {
-    # ALCE 数据 tar:princeton-nlp/ALCE 项目页说明 cif/data.tar(约 451MB)
+    # ALCE 数据 tar:官方 download_data.sh 用的 ALCE-data.tar(约 451MB;2026-09-15 实测)
     "alce_tar": [
+        f"{HF_ENDPOINT}/datasets/princeton-nlp/ALCE-data/resolve/main/ALCE-data.tar",
         f"{HF_ENDPOINT}/datasets/princeton-nlp/ALCE-data/resolve/main/cif/data.tar",
         f"{HF_ENDPOINT}/datasets/princeton-nlp/ALCE-data/resolve/main/data.tar",
     ],
-    # LongBench dureader 子集(中文长文,D2 fallback 首选)
+    # LongBench 整包 data.zip(实测 200;内含 dureader.jsonl,D2 fallback 源)
     "longbench_dureader": [
-        f"{HF_ENDPOINT}/datasets/THUDM/LongBench/resolve/main/data/dureader.zip",
         f"{HF_ENDPOINT}/datasets/THUDM/LongBench/resolve/main/data.zip",
+        f"{HF_ENDPOINT}/datasets/THUDM/LongBench/resolve/main/data/dureader.zip",
     ],
     # DuReader_robust 仓库文件(加载脚本本身,从中提取 BOS URL)
     "dureader_robust_repo": [
@@ -46,10 +46,10 @@ CANDIDATES = {
     ],
 }
 
-# BOS 原始数据直链候选(baidu-bos;若加载脚本拉不到,用这些直测)
+# BOS 原始数据直链候选(首条为 2026-09-15 云端实测 200 的主源)
 BOS_URLS = [
-    "https://dataset-bj.cdn.bcebos.com/dureader/data/dureader_robust-data.tar.gz",
     "https://bj.bcebos.com/paddlenlp/datasets/dureader_robust-data.tar.gz",
+    "https://dataset-bj.cdn.bcebos.com/dureader/data/dureader_robust-data.tar.gz",
     "https://dataset-bj.cdn.bcebos.com/dureader/dureader-robust-data.tar.gz",
 ]
 

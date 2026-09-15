@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """spec 配置枚举(WP3 / C7):A=plain;B=固定草稿;C=ngram。
 
-vLLM 0.29 构造方式(以 vllm.LLM 实际签名为准,WP0 冒烟验证后回填):
+vLLM 0.29 构造方式(2026-09-15 云端 inspect.signature 实测回填):
 - A(plain): 不传任何 speculative 参数。
-- B(固定草稿模型): vLLM >= 0.4.x 的离线接口为
-      LLM(model=target, speculative_model=draft, num_speculative_tokens=K)
-  TODO(WP0): 0.29 中该参数名是否更名(如 speculative_config dict)需 import
-  vllm.LLM 后用 inspect.signature 核实;核实前不写死其他变体。
-- C(ngram): 0.29 走统一 method 入口:
-      LLM(model=target, method="ngram",
-          num_speculative_tokens=K, prompt_lookup_max=L, prompt_lookup_min=?)
-  TODO(WP0): prompt_lookup_min 是否必填/默认值待冒烟确认;当前不传,
-  依赖 0.29 默认(prompt_lookup_min 若为 None 引擎应自行取 1 或 2)。
+- B(固定草稿模型)/ C(ngram)统一走 speculative_config dict:
+      LLM(model=target,
+          speculative_config={
+              "method": "draft_model" | "ngram",
+              "model": <draft, 仅 B>,
+              "num_speculative_tokens": K,
+              "prompt_lookup_max": L, "prompt_lookup_min": L,  # 仅 C;ngram 二者必填其一
+          },
+          per_request_spec_decode_metrics="detailed")   # C10 离线 per-request spec 统计
+  注:0.29 移除了 speculative_model/num_speculative_tokens 顶层参数
+  (EngineArgs 实测 TypeError);ngram 默认 lookup_min=max=5,我们显式传。
 """
 
 from __future__ import annotations
@@ -42,24 +43,17 @@ class SpecConfig:
     prompt_lookup_max: int | None = None
 
     def llm_kwargs_patch(self) -> dict:
-        """返回追加到 EngineConfig 的 speculative 关键字参数。
-
-        键名以 vllm.LLM 0.29 签名为准(见文件头 TODO,WP0 冒烟后回填)。
-        """
+        """返回追加到 vllm.LLM 的 speculative 关键字参数(0.29 实测口径)。"""
         if self.kind == "plain":
             return {}
+        cfg: dict = {"method": "draft_model" if self.kind == "draft" else "ngram",
+                     "num_speculative_tokens": self.num_speculative_tokens}
         if self.kind == "draft":
-            return {
-                "speculative_model": self.draft_model,
-                "num_speculative_tokens": self.num_speculative_tokens,
-            }
+            cfg["model"] = self.draft_model
         if self.kind == "ngram":
-            return {
-                "method": "ngram",
-                "num_speculative_tokens": self.num_speculative_tokens,
-                "prompt_lookup_max": self.prompt_lookup_max,
-            }
-        raise ValueError(f"未知 spec kind: {self.kind!r}")
+            cfg["prompt_lookup_max"] = self.prompt_lookup_max
+            cfg["prompt_lookup_min"] = self.prompt_lookup_max
+        return {"speculative_config": cfg}
 
 
 def enumerate_spec_configs() -> list[SpecConfig]:

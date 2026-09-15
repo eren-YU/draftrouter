@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """四字段中文正则:命中/不命中样例(正则集中在 field_regex.py,调规则只动那里)。"""
 
 import sys
@@ -6,9 +5,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest  # noqa: E402
-
-from field_regex import (FIELD_COVERAGE_THRESHOLD, FIELD_NAMES,  # noqa: E402
-                         detect_fields, field_coverage)
+from field_regex import (  # noqa: E402
+    FIELD_COVERAGE_THRESHOLD,
+    FIELD_NAMES,
+    detect_fields,
+    field_coverage,
+)
 
 HIT_TEXT = ("2023年5月12日,华为公司在深圳举办发布会,正式发布了Mate 60系列产品,"
             "售价5999元,由华为技术有限公司与招商银行联合推出,首销当日销售额突破1亿元。")

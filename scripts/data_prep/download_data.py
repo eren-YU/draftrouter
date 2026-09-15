@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """数据下载:ALCE tar、repobench-c(python/java)、hotpotqa、ceval-exam → /root/autodl-tmp/data/
 
 【云端执行方式】
@@ -25,17 +24,26 @@ from common import data_root, load_json, save_json, sha256_file  # noqa: E402
 
 MANIFEST_NAME = "data_manifest.json"
 
-# 各数据集的下载计划;revision 为 P0 冻结值(若仓库无此 revision,运行时会报错并在 D2 记录实际值)
+# 各数据集的下载计划;URL 均为 2026-09-15 云端实测 200 的直链
 DOWNLOAD_PLAN = [
     {"name": "alce", "kind": "url",
-     "urls": ["https://hf-mirror.com/datasets/princeton-nlp/ALCE-data/resolve/main/cif/data.tar"],
+     "urls": ["https://hf-mirror.com/datasets/princeton-nlp/ALCE-data/resolve/main/ALCE-data.tar"],
      "filename": "alce_data.tar"},
-    {"name": "repobench-c-python", "kind": "hf_dataset",
-     "repo_id": "tianyang/repobench-c", "config": "python", "revision": "main",
-     "split": "completion"},
-    {"name": "repobench-c-java", "kind": "hf_dataset",
-     "repo_id": "tianyang/repobench-c", "config": "java", "revision": "main",
-     "split": "completion"},
+    # repobench-c 主仓只有 loader 脚本(datasets>=3 无法加载),改下官方 parquet 转换分支
+    {"name": "repobench-c-python", "kind": "url",
+     "urls": ["https://hf-mirror.com/datasets/tianyang/repobench-c/resolve/refs%2Fconvert%2Fparquet/python_cff/test/0000.parquet"],
+     "filename": "repobench_python_cff_test.parquet"},
+    {"name": "repobench-c-java", "kind": "url",
+     "urls": ["https://hf-mirror.com/datasets/tianyang/repobench-c/resolve/refs%2Fconvert%2Fparquet/java_cff/test/0000.parquet"],
+     "filename": "repobench_java_cff_test.parquet"},
+    # 中文场景主源:DuReader-robust BOS 直链(实测 200,约 20.5MB)
+    {"name": "dureader_robust", "kind": "url",
+     "urls": ["https://bj.bcebos.com/paddlenlp/datasets/dureader_robust-data.tar.gz"],
+     "filename": "dureader_robust-data.tar.gz"},
+    # 中文场景 fallback:LongBench data.zip(实测 200,约 113MB;内含各子集 jsonl)
+    {"name": "longbench", "kind": "url",
+     "urls": ["https://hf-mirror.com/datasets/THUDM/LongBench/resolve/main/data.zip"],
+     "filename": "longbench_data.zip"},
     {"name": "hotpotqa", "kind": "hf_dataset",
      "repo_id": "hotpotqa/hotpot_qa", "config": "distractor", "revision": "main",
      "split": "validation"},

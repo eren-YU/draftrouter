@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """四套版本化 Prompt 模板(WP3 / baseline §6)。
 
 - zh_json:      中文任务,要求 JSON 四字段输出(公司名/金额/时间/产品名)

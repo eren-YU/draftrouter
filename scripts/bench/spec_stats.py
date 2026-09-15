@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """spec-decode 统计提取(WP3 / C10)。
 
 口径:四字段 = num_drafts / num_draft_tokens / num_accepted_tokens /
@@ -96,6 +95,56 @@ def snapshot_from_object(stats_obj: Any) -> SpecStats:
     if missing:
         _warn_missing(missing)
     return stats
+
+
+def spec_stats_from_request_output(ro: Any) -> SpecStats | None:
+    """vLLM 0.29 实测路径(WP0 冒烟确认,2026-09-15):
+
+    CompletionOutput.spec_decode_metrics = RequestSpecDecodeMetrics{
+        num_spec_tokens, histogram(len=k+1), num_draft_tokens,
+        per_step_accepted, per_step_drafted(detailed 档)}。
+
+    四字段映射:
+      num_drafts = sum(histogram)(= verify 步数)
+      num_draft_tokens = num_draft_tokens
+      num_accepted_tokens = sum_j j*histogram[j]
+      num_accepted_tokens_per_pos[p] = sum_{j>p} histogram[j]
+    引擎构造需 per_request_spec_decode_metrics='detailed'(config.py 已强制)。
+    非 spec 配置(A)或引擎未开启该开关时返回 None。
+    """
+    outs = getattr(ro, "outputs", None) or []
+    m = getattr(outs[0], "spec_decode_metrics", None) if outs else None
+    if m is None:
+        return None
+    hist = list(getattr(m, "histogram", None) or [])
+    if not hist:
+        return None
+    stats = SpecStats()
+    stats.num_drafts = sum(hist)
+    stats.num_draft_tokens = int(getattr(m, "num_draft_tokens", 0) or 0)
+    stats.num_accepted_tokens = sum(j * c for j, c in enumerate(hist))
+    stats.num_accepted_tokens_per_pos = [
+        sum(hist[p + 1:]) for p in range(len(hist) - 1)]
+    return stats
+
+
+def aggregate_spec_stats(parts: list["SpecStats"]) -> SpecStats:
+    """逐请求 SpecStats 求和(整批口径)。None/全 None 项跳过。"""
+    agg = SpecStats()
+    valid = [p for p in parts if p.num_draft_tokens is not None]
+    if not valid:
+        _warn_missing(["全部请求均无 spec 统计(plain 配置或开关未生效?)"])
+        return agg
+    agg.num_drafts = sum(p.num_drafts or 0 for p in valid)
+    agg.num_draft_tokens = sum(p.num_draft_tokens for p in valid)
+    agg.num_accepted_tokens = sum(p.num_accepted_tokens or 0 for p in valid)
+    pos_lists = [p.num_accepted_tokens_per_pos for p in valid
+                 if p.num_accepted_tokens_per_pos]
+    if pos_lists:
+        width = min(len(x) for x in pos_lists)
+        agg.num_accepted_tokens_per_pos = [
+            sum(x[i] for x in pos_lists) for i in range(width)]
+    return agg
 
 
 def snapshot_spec_stats(llm_or_engine: Any) -> SpecStats:

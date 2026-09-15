@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """WP3 bench 全局配置口径(依据 docs/P0-action-plan.md §0 C5-C9)。
 
 注意:本模块只在函数体内延迟 import vllm,保证本地 Windows 无 GPU/无 vllm
@@ -9,6 +8,11 @@
 from __future__ import annotations
 
 import os
+
+# 云端宿主 nvcc 仅 CUDA 11.8,flashinfer 采样器 JIT 编译必失败(2026-09-15 实测);
+# 统一关闭,不影响被测指标(采样走 torch 原生路径)。必须在 import vllm 前生效。
+os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
@@ -61,6 +65,9 @@ class EngineConfig:
             seed=self.seed,
         )
         kwargs.update(self.spec_kwargs)
+        if self.spec_kwargs:
+            # C10:离线 per-request spec 统计(0.29 实测参数,值域 none/summary/detailed)
+            kwargs["per_request_spec_decode_metrics"] = "detailed"
         return kwargs
 
 
@@ -115,7 +122,7 @@ def read_instance_uptime_seconds() -> float | None:
         except ValueError:
             return None
     try:
-        with open("/proc/uptime", "r", encoding="ascii") as f:
+        with open("/proc/uptime", encoding="ascii") as f:
             return float(f.read().split()[0])
     except (OSError, ValueError, IndexError):
         return None

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """单组离线 bench CLI 入口(WP3 / C1)。
 
 用法示例(云端):
@@ -27,10 +26,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import EngineConfig, apply_no_think, build_sampling_params, chat_template_kwargs
-from configs import resolve_spec_config
 from prompts import TEMPLATE_VERSION, render
 from runner import VALID_BS, WARMUP_REQUESTS, run_one_group, shuffle_group_order
 from schema import build_result, fill_metrics, write_result
+
+from configs import resolve_spec_config
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -40,7 +40,7 @@ logger = logging.getLogger("run_group")
 def load_samples(jsonl_path: str) -> list[dict]:
     """读样本 jsonl:至少含 prompt 字段与 sample_id;保留 text/question 供模板。"""
     samples = []
-    with open(jsonl_path, "r", encoding="utf-8") as f:
+    with open(jsonl_path, encoding="utf-8") as f:
         for i, line in enumerate(f):
             line = line.strip()
             if not line:

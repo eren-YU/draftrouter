@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """spec 统计单测:字段快照探测、日志正则解析、接受率分母口径。"""
 
-from spec_stats import (SpecStats, parse_spec_log_line, snapshot_from_object,
-                        snapshot_spec_stats)
+from spec_stats import SpecStats, parse_spec_log_line, snapshot_from_object, snapshot_spec_stats
 
 
 class FakeSpecStats:
@@ -85,3 +83,61 @@ def test_snapshot_probe_miss_returns_all_none():
     s = snapshot_spec_stats(FakeLLM())
     assert isinstance(s, SpecStats)
     assert s.num_drafts is None and s.num_draft_tokens is None
+
+
+# ------------------------------------------------- 0.29 实测路径(WP0 回填)
+
+class _FakeReqSpecMetrics:
+    """模拟 RequestSpecDecodeMetrics:histogram[j] = j 个草稿被接受的步数。"""
+
+    def __init__(self, histogram, num_draft_tokens):
+        self.histogram = histogram
+        self.num_draft_tokens = num_draft_tokens
+        self.per_step_accepted = []
+
+
+class _FakeCompletion:
+    def __init__(self, metrics):
+        self.spec_decode_metrics = metrics
+
+
+class _FakeReqOutput:
+    def __init__(self, metrics):
+        self.outputs = [_FakeCompletion(metrics)]
+
+
+def test_spec_stats_from_request_output():
+    from spec_stats import spec_stats_from_request_output
+    # K=3:histogram 长度 4;2 步接受 3、1 步接受 1、1 步接受 0
+    m = _FakeReqSpecMetrics([1, 1, 0, 2], num_draft_tokens=4*3 - 3)  # 9 草稿(末步+bonus)
+    ro = _FakeReqOutput(m)
+    s = spec_stats_from_request_output(ro)
+    assert s is not None
+    assert s.num_drafts == 4
+    assert s.num_draft_tokens == 9
+    assert s.num_accepted_tokens == 0*1 + 1*1 + 2*0 + 3*2
+    # per-pos:p0 接受数 = sum hist[1:]=3;p1=sum hist[2:]=2;p2=sum hist[3:]=2
+    assert s.num_accepted_tokens_per_pos == [3, 2, 2]
+    assert s.acceptance_rate == s.num_accepted_tokens / 9
+
+
+def test_spec_stats_from_request_output_plain_returns_none():
+    from spec_stats import spec_stats_from_request_output
+
+    class _Plain:
+        outputs = [type("C", (), {"spec_decode_metrics": None})()]
+
+    assert spec_stats_from_request_output(_Plain()) is None
+
+
+def test_aggregate_spec_stats():
+    from spec_stats import SpecStats, aggregate_spec_stats
+    a = SpecStats(num_drafts=2, num_draft_tokens=6, num_accepted_tokens=4,
+                  num_accepted_tokens_per_pos=[4, 3, 2])
+    b = SpecStats(num_drafts=3, num_draft_tokens=9, num_accepted_tokens=5,
+                  num_accepted_tokens_per_pos=[5, 3, 1])
+    agg = aggregate_spec_stats([a, b])
+    assert agg.num_drafts == 5 and agg.num_draft_tokens == 15
+    assert agg.num_accepted_tokens == 9
+    assert agg.num_accepted_tokens_per_pos == [9, 6, 3]
+    assert aggregate_spec_stats([]).num_draft_tokens is None
