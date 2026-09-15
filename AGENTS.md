@@ -11,7 +11,7 @@
 ## 云端操作规则
 
 - 非交互 ssh 下 conda 不在 PATH:用 `/root/miniconda3/envs/draftrouter/bin/python`,或先 `source /root/miniconda3/etc/profile.d/conda.sh && conda activate draftrouter`。
-- 预计超过 5 分钟的任务(微调、评测、大规模生成)必须放 tmux:`ssh autodl "tmux new -d -s <名字> '<命令>'"`,用 `tmux capture-pane -p -t <名字>` 查看输出。禁止留前台挂起的 ssh。
+- 预计超过 5 分钟的任务(微调、评测、大规模生成)必须后台化:`ssh autodl "nohup <命令> > 日志 2>&1 &"`,用 `tail` 查看日志、`pgrep` 确认存活(实例无 tmux;如需可交互观察再装)。禁止留前台挂起的 ssh。
 - 跑完任务随手确认 GPU 已释放(`nvidia-smi`),不留僵尸 python 进程占卡。
 - 模型权重、数据集、checkpoint 一律不进 git(见 .gitignore),放云端数据盘。
 - 换 GPU 型号需人工确认:性能数字只在同型号卡上可比。
