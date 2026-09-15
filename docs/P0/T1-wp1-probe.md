@@ -25,3 +25,13 @@ ssh autodl "cd /root/autodl-tmp/draftrouter && source docs/P0/00-context.md 中�
 
 ## D1 冻结记录(执行后填写)
 - (待填)
+
+## 已知问题(2026-09-15 首跑 `results/p0-env/wp1.json`,T1 开工先修)
+1. **词表断言口径错误**:`len(tokenizer)=151669`(8B),151936 是 config 的 embedding 行数。
+   正确断言 = ①三模型 tokenizer 词表互相完全一致(长度+内容 hash);②三者 config vocab_size=151936。
+2. **KV/显存解析失败**:kv_cache_tokens=10560 可疑(预算≈44.7K),reserved_gib=0.0、
+   max_concurrency_8k=null —— `scripts/wp1_probe.py` 的正则与 0.29 日志措辞不符;
+   修正法:跑一次看 `results/p0-env/wp1-engine-8b06b.log` 原文,按实际行收紧正则。
+3. **8B+1.7B 引擎启动失败**(returncode=1):查 `results/p0-env/wp1-engine-8b17b.log` 根因(疑似显存/KV 配置)。
+4. **LoRA 探针失败**:`lora_modules=None` 等参数不合法(TypeError),按 0.29 签名修正 snippet。
+   修完只重跑失败子项,不必重跑已成功的步骤。
