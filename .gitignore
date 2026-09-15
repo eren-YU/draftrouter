@@ -7,6 +7,9 @@ venv/
 dist/
 build/
 .ipynb_checkpoints/
-results/
+results/*
+!results/baseline/
+results/baseline/*
+!results/baseline/summary.json
 *.log
 .DS_Store
