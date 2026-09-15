@@ -23,5 +23,25 @@ ALCE tar/LongBench zip/repobench parquet/dureader BOS tar 的加载与四池构�
 - [ ] D2 冻结:实际数据源/config/revision 写入本文件;长度分布表(p10/p50/p90)入 docs;
 - [ ] 构建脚本改动本地 commit。
 
-## D2 冻结记录(执行后填写)
-- (待填)
+## D2 决策项(2026-09-15 数据侧筛查完成,待用户确认)
+
+数据侧筛查结果(data-valid 200,四字段出现率,门槛 60%):
+
+| 源 | company | amount | time | product | 结论 |
+| --- | --- | --- | --- | --- | --- |
+| DuReader-robust(主源,dev) | 10.5% | 17% | 24% | 3% | **不达标** |
+| LongBench dureader(fallback) | 97% | 91.5% | 97.5% | 75% | **pass** |
+
+按 action-plan D2 预案,建议正式切 LongBench dureader 为中文主源(数据已在云端
+`longbench_data.zip`,筛查 200 篇 0 超长)。**待用户确认后**执行:base_records 主源切换、
+重跑四池与筛查、更新数据清单与 docs 数据源表 → 本文件勾掉剩余验收项。
+
+## 已完成(2026-09-15,子代理云端实测,commit 2a20bf4)
+- repobench-c 改 parquet 分支(`.../parquet/{config}/test/0000.parquet`,列取 prompt);
+- DuReader-robust BOS tar 解析(SQuAD 风格);LongBench data.zip fallback 双源接线;
+- ALCE tar 实测不含 hotpotqa(只有 eli5/asqa/qampari)→ RAG 源改 eli5+asqa,
+  sample_id 带 subset;hotpotqa 保留下载作对照(docs 数据源表需标注此变更);
+- RAG long 计长漂移修复:全量 2728/2728 落入 [7500,8192],0 越 8192;
+- data-valid 池改固定全中文 200(POOL_SCENE_POLICY);
+- 云端四池 50/50/200/200 零交集 ✓;样本 rag/chinese/code = 9362/2834/25024 条;
+  本地 pytest 32 passed。
